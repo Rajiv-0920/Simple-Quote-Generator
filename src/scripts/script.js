@@ -16,8 +16,8 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    generate_quote("Random")
     showList();
+    generate_quote("Random")
 });
 
 btn_Generate.addEventListener("click", () => {
@@ -25,25 +25,31 @@ btn_Generate.addEventListener("click", () => {
     btn_Generate.disabled = true;
 });
 
-function showList() {
-    fetch("https://api.quotable.io/tags")
-        .then(response => response.json())
-        .then(data => {
-            const quote_list = document.querySelector(".list");
-            for (var i = 0; i < data.length - 1; i++) {
-                quote_list.innerHTML += `<li class="list-item">${data[i].name}</li>`
-            }
-            const listItem = document.querySelectorAll(".list-item");
-            listItem.forEach(item => {
-                item.addEventListener("click", () => {
-                    listItem.forEach(item => item.classList.remove("active"));
-                    item.classList.add("active");
-                    btn_select_quote.innerText = item.innerText;
-                    btn_Generate.click();
-                    reset();
-                })
+async function showList() {
+    try {
+        const response = await fetch("https://api.quotable.io/tags");
+        const data = await response.json();
+
+        const quote_list = document.querySelector(".list");
+        for (var i = 0; i < data.length - 1; i++) {
+            quote_list.innerHTML += `<li class="list-item">${data[i].name}</li>`
+        }
+        const listItem = document.querySelectorAll(".list-item");
+        listItem.forEach(item => {
+            item.addEventListener("click", () => {
+                listItem.forEach(item => item.classList.remove("active"));
+                item.classList.add("active");
+                btn_select_quote.innerText = item.innerText;
+                btn_Generate.click();
+                reset();
             })
-        });
+        })
+    } catch (error) {
+        btn_select_quote.addEventListener("click", () => {
+            alert("Try again later");
+            reset();
+        })
+    }
 }
 
 function reset() {
@@ -51,19 +57,23 @@ function reset() {
     listEl.classList.remove("show");
 }
 
-function generate_quote(tag) {
-    if (tag != "Random") {
-        fetch(`https://api.quotable.io/random?tags=${tag}`)
-            .then(response => response.json())
-            .then(data => {
-                show_quote(data)
-            })
-    } else {
-        fetch(`https://api.quotable.io/random`)
-            .then(response => response.json())
-            .then(data => {
-                show_quote(data)
-            })
+async function generate_quote(tag) {
+    try {
+        let apiURL;
+
+        if (tag != "Random") {
+            apiURL = `https://api.quotable.io/random?tags=${tag}`;
+        } else {
+            apiURL = `https://api.quotable.io/random`;
+        }
+
+        const response = await fetch(apiURL);
+        const data = await response.json();
+        show_quote(data);
+    } catch (error) {
+        quoteEl.innerText = `Try again later`;
+        authorEl.innerText = `An error happened`;
+        btn_Generate.disabled = false;
     }
 }
 
